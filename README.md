@@ -23,12 +23,12 @@ This project demonstrates a simple preemptive task scheduler written in C. It sc
     ```
 
 ## Example output
-Current Tick: 18000 ms
-Executing Task ID: 0 | Priority: 3
+    Current Tick: 18000 ms
+    Executing Task ID: 0 | Priority: 3
 
-Task ID   Priority    Period      Elapsed Time (s)    Ready     
-0         3           500         0.80                Yes       
-1         2           1000        1.20                Yes       
-2         1           1500        0.40                No        
+    Task ID   Priority    Period      Elapsed Time (s)    Ready     
+    0         3           500         0.80                Yes       
+    1         2           1000        1.20                Yes       
+    2         1           1500        0.40                No        
 
-Task 1 (Read Sensor Data): Reading sensor data...
+    Task 1 (Read Sensor Data): Reading sensor data...
