@@ -6,18 +6,18 @@
 
 #define MAX_TASKS 3
 
-// Task structure
 typedef struct {
-    void (*taskFunction)(void);  // Task function pointer
-    uint8_t priority;            // Task priority
-    uint8_t taskID;              // Task ID for identification
-    uint32_t periodMs;           // Period for running the task in ms
-    uint32_t elapsedMs;          // Time elapsed since last execution
-    bool isReady;                // Flag to indicate if the task is ready
+    void (*taskFunction)(void);  
+    uint8_t priority;            
+    uint8_t taskID;              
+    uint32_t periodMs;           
+    uint32_t elapsedMs;          
+    bool isReady;                
 } Task;
 
 static Task taskList[MAX_TASKS];
 static uint8_t taskCount = 0;
+static uint32_t currentTick = 0;
 
 static void AddTask(void (*taskFunction)(void), uint8_t priority, uint32_t periodMs) {
     if (taskCount < MAX_TASKS) {
@@ -32,15 +32,36 @@ static void AddTask(void (*taskFunction)(void), uint8_t priority, uint32_t perio
 }
 
 static void delayMs(uint32_t ms) {
-    usleep(ms * 1000);  // Convert to microseconds
+    usleep(ms * 1000);
 }
 
-// Preemptive scheduler function
+static void LogTaskStatus(const char *executingMessage) {
+    printf("\033[H\033[J");
+
+    printf("Current Tick: %d ms\n", currentTick);
+
+    if (executingMessage != NULL) {
+        printf("%s\n\n", executingMessage);
+    }
+
+    printf("%-10s%-12s%-12s%-20s%-10s\n", "Task ID", "Priority", "Period", "Elapsed Time (s)", "Ready");
+    for (uint8_t i = 0; i < taskCount; i++) {
+        Task *task = &taskList[i];
+        printf("%-10d%-12d%-12d%-20.2f%-10s\n",
+               task->taskID,
+               task->priority,
+               task->periodMs,
+               task->elapsedMs / 1000.0,
+               task->isReady ? "Yes" : "No");
+    }
+    printf("\n");
+}
+
 static void SchedulerRun(uint32_t tickMs) {
     while (1) {
         Task *highestPriorityTask = NULL;
+        char executingMessage[100] = "";
 
-        // Update elapsed time and set tasks to ready if their period has elapsed
         for (uint8_t i = 0; i < taskCount; i++) {
             taskList[i].elapsedMs += tickMs;
             if (taskList[i].elapsedMs >= taskList[i].periodMs) {
@@ -48,7 +69,6 @@ static void SchedulerRun(uint32_t tickMs) {
             }
         }
 
-        // Find the highest-priority ready task
         for (uint8_t i = 0; i < taskCount; i++) {
             if (taskList[i].isReady) {
                 if (highestPriorityTask == NULL || taskList[i].priority > highestPriorityTask->priority) {
@@ -57,46 +77,46 @@ static void SchedulerRun(uint32_t tickMs) {
             }
         }
 
-        // Execute the highest-priority task if one is ready
         if (highestPriorityTask != NULL) {
+            snprintf(executingMessage, sizeof(executingMessage),
+                     "Executing Task ID: %d | Priority: %d",
+                     highestPriorityTask->taskID,
+                     highestPriorityTask->priority);
+
+            LogTaskStatus(executingMessage);
+
             highestPriorityTask->taskFunction();
             highestPriorityTask->elapsedMs = 0;
             highestPriorityTask->isReady = false;
         }
 
         delayMs(tickMs);  
+        
+        currentTick += tickMs;
     }
 }
 
-
-// Simulated sensor data reading
 void ReadSensorData() {
     printf("Task 1 (Read Sensor Data): Reading sensor data...\n");
-    // Simulate data processing time
     delayMs(50);  
 }
 
-// Simulated data processing
 void ProcessData() {
     printf("Task 2 (Process Data): Processing data...\n");
-    // Simulate processing time
     delayMs(100);  
 }
 
-// Simulated communication with external device
 void CommunicateWithDevice() {
     printf("Task 3 (Communicate): Communicating with device...\n");
-    // Simulate communication time
     delayMs(150); 
 }
 
 int main() {
-    // Function Name - Priority - Period
-    AddTask(ReadSensorData, 3, 500);       // High priority, every 500 ms
-    AddTask(ProcessData, 2, 1000);         // Medium priority, every 1000 ms
-    AddTask(CommunicateWithDevice, 1, 1500); // Low priority, every 1500 ms
+    AddTask(ReadSensorData, 3, 500);       
+    AddTask(ProcessData, 2, 1000);         
+    AddTask(CommunicateWithDevice, 1, 1500); 
 
-    SchedulerRun(100);
+    SchedulerRun(400);
 
     return 0;
 }
